@@ -1,5 +1,15 @@
 class NMEAGPSMessage {
-    /* NMEA GPS Message Class */
+/*/ NMEA GPS Message Class 
+ *  
+ *  Basic Standards:
+ *  ----------------
+ *  1. Messages start with $ and end with <CR><LF>
+ *  2. The first 2 chars after $ are the 'talker type'
+ *  3. The three chars after the talker are the message type
+ *  4. The information between the type and the * is the data
+ *  5. The data is comma delimited
+ *  6. The number after the * is the checksum for message validation
+/*/
 
     message      = ''
     messageArray = []
@@ -7,37 +17,63 @@ class NMEAGPSMessage {
     type         = ''    //
 
     constructor(message) {
-        if (!message.startsWith(this.talker)) 
-            throw 'Invalid NMEA GPS Message! Message does not start with $GP:\n' + message
-
-        if (message.length > 82)
-            throw 'Invalid NMEA GPS Message! Message is longer than 82 characters:\n' + message
-        
+        this.#validateMessage(message)
         this.message      = message
         this.messageArray = this.message.split(',')
-        this.type         = this.messageArray[0].substring(3)
+        this.type         = this.messageArray[0].substring(3, 6)
+    }
+
+    #validateMessage(message) { 
+    /* Validate the message against NMEA Standards */
+        
+        if (!message.startsWith(this.talker)) 
+            throw 'Invalid NMEA GPS Talker! Message does not start with $GP:\n' + message
+
+        if (message.length > 82)
+            throw 'Invalid NMEA GPS Length! Message is longer than 82 characters:\n' + message
+
+        /*/
+         * Checksum Validation 
+         * -------------------
+         * The checksum value occurs after the * at the end of the message
+         * Every char after $ and before * must be XOR'd and must be equal to the checksum
+        /*/
+        let checksum = message.split('*')[1]
+        let chars    = message.split('*')[0].substring(1) 
+
+        if (checksum == '')
+            throw 'Invalid NMEA GPS Message! Message has no checksum:\n' + message
+    
+        let char = chars.charCodeAt(0)
+        for (let i = 1; i < chars.length; i++) {
+            char = char ^ chars.charCodeAt(i);
+        }
+        
+        if (char.toString(16) !== checksum)
+            throw `Corrupted NMEA GPS Message! Checksum is ${checksum} but calculated ${char.toString(16)} for message:\n` + message
     }
 }
 
 class GPGGA extends NMEAGPSMessage {
-    /*----------------------------------------------------------------------------/
-    $GPGGA,         -- 00 - Message Type: GPGGA
-    075909.00,      -- 01 - Timestamp
-    6451.53390,     -- 02 - Latitude            -- 64  degrees, 51.53390 minutes
-    N,              -- 03 - Latitude Direction
-    14749.78748,    -- 04 - Longitude           -- 147 degrees, 49.78748 minutes
-    W,              -- 05 - Longitude Directions
-    1,              -- 06 - Fix Quality (0 is invalid, 1 is GPS, 2 is DGPS)
-    04,             -- 07 - Satellite Count
-    8.23,           -- 08 - Horizontal Dilution of Precision
-    149.4,          -- 09 - Altitude
-    M,              -- 10 - Altitude unit: meters
-    5.8,            -- 11 - Height of geoid above WGS84 ellipsoid
-    M,              -- 12 - Geoid height unit: meters
-    ...,            -- 13 - Time since last DGPS update (can leave blank)
-    ...             -- 14 - DGPS reference station id   (can leave blank)
-    *75             -- 14 - Checksum (same array position as last piece.)
-    /----------------------------------------------------------------------------*/
+/*/ GGA Message Standard:
+ *  ---------------------
+ *  $GPGGA,         -- 00 - Message Type: GPGGA
+ *  075909.00,      -- 01 - Timestamp
+ *  6451.53390,     -- 02 - Latitude            -- 64  degrees, 51.53390 minutes
+ *  N,              -- 03 - Latitude Direction
+ *  14749.78748,    -- 04 - Longitude           -- 147 degrees, 49.78748 minutes
+ *  W,              -- 05 - Longitude Directions
+ *  1,              -- 06 - Fix Quality (0 is invalid, 1 is GPS, 2 is DGPS)
+ *  04,             -- 07 - Satellite Count
+ *  8.23,           -- 08 - Horizontal Dilution of Precision
+ *  149.4,          -- 09 - Altitude
+ *  M,              -- 10 - Altitude unit: meters
+ *  5.8,            -- 11 - Height of geoid above WGS84 ellipsoid
+ *  M,              -- 12 - Geoid height unit: meters
+ *  ...,            -- 13 - Time since last DGPS update (can leave blank)
+ *  ...             -- 14 - DGPS reference station id   (can leave blank)
+ *  *75             -- 14 - Checksum (same array position as last piece.)
+/*/
 
     type = 'GGA'
 
