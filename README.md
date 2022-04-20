@@ -7,12 +7,13 @@ Once the page is open simply click Select Device, do that, and then click run.
 
 ### NMEA GPS Serial Format Basics
  #### Basic Standards:
- - Messages start with $ and end with <CR><LF>
- - The first 2 chars after $ are the 'talker type'
- - The three chars after the talker are the message type
- - The information between the type and the * is the data
+ - Messages start with '$' and end with '\<CR>\<LF>'
+ - The first 2 chars after '$' is the *talker*
+ - The three chars after the *talker* is the *type*
+ - The information between the *type* and the '\*' is the data
  - The data is comma delimited
- - The number after the * is the checksum for message validation
+ - The number after the '\*' is the checksum for message validation
+ - The maximum message length is 82 characters
  
  #### $GPGGA Message Example:
  ```
