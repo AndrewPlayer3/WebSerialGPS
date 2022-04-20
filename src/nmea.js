@@ -42,11 +42,11 @@ class NMEAGPSMessage
         if (message.length > 82)
             throw 'Invalid NMEA GPS Length! Message is longer than 82 characters:\n' + message
 
-        /*/
-         * Checksum Validation 
-         * -------------------
-         * The checksum value occurs after the * at the end of the message
-         * Every char after $ and before * must be XOR'd and must be equal to the checksum
+    
+        /*/ Checksum Validation 
+         *  -------------------
+         *  The checksum value occurs after the * at the end of the message
+         *  Every char after $ and before * must be XOR'd and must be equal to the checksum
         /*/
         let checksum = message.split('*')[1]
         let chars    = message.split('*')[0].substring(1) 
