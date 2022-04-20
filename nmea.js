@@ -126,7 +126,7 @@ class GPGGA extends NMEAGPSMessage {
 
     #setTime() {
         let time = this.messageArray[1]
-        this.utc = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}` // HH:MM:SS.SS
+        this.utc = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}UTC` // HH:MM:SS.SS
         this.timestamp = Number(time)
     }
 
