@@ -1,9 +1,17 @@
+/*/
+ *    Name: serial.js
+ *    Author: Andrew Player
+ *    Desicrption: Script for reading gps data from a serial enabled neo-6m gps.
+ *    Note: See bottom for description of relevand NMEA standards.  
+/*/
+
 let reader, gpsPort
 let keepReading = true,
     needConcat = false
 let data_string = ''
 let data_arr = []
 let decoder = new TextDecoder('UTF-8')
+
 
 async function openGPSPort() {
     try {
@@ -25,6 +33,26 @@ async function openGPSPort() {
         console.log('Error Opening Port: ', error.message)
     }
 }
+
+
+async function getMapURL(latitude, longitude) {
+
+    let north_bound = latitude + 0.5
+    let south_bound = latitude - 0.5
+    let east_bound  = longitude + 0.5
+    let west_bound  = longitude - 0.5
+
+    let url_base = "https://www.openstreetmap.org/export/embed.html?"
+    let url_box = `bbox=${-west_bound}%2C${south_bound}%2C${-east_bound}%2C${north_bound}`
+    let url_layer = "&amp;layer=mapnik"
+    let url_marker = `&amp;marker=${latitude}%2C${-longitude}`
+
+    let url = url_base + url_box + url_layer + url_marker
+
+    let map = document.querySelector('#map');
+    map.setAttribute('src', url)
+}
+
 
 async function readUntilClosed() {
     console.log('Beginning Read Function...')
@@ -50,7 +78,16 @@ async function readUntilClosed() {
                 }
                 for (let j = 0; j < data_arr.length; j++) {
                     let data = data_arr[j]
-                    if (data.startsWith('$GPGGA')) document.querySelector('#dataField').innerText = 'Data: ' + data
+                    if (data.startsWith('$GPGGA')) {
+                        try {
+                            let message = new GPGGA(data)
+                            let dataField = document.querySelector('#dataField')
+                            dataField.innerText = message.toString()
+                            await getMapURL(message.latitude, message.longitude)
+                        } catch (error) {
+                            console.log("nmea.js script is likely missing: ", error.message)
+                        }
+                    }
                 }
                 data_arr = []
             }
@@ -63,6 +100,7 @@ async function readUntilClosed() {
     await gpsPort.close()
     console.log('Ending Read Function...')
 }
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     let connect_button = document.querySelector('#connect')
@@ -88,3 +126,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         readUntilClosed()
     })
 })
+
+
