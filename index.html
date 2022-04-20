@@ -8,6 +8,12 @@
     <body>
         <h1>GT-U7 (NEO-6M) GPS with the WebSerial API</h1>
         <div>
+            <button id="connect">Select Device</button>
+            <button id="map-btn">Toggle Map</button>
+            <button id="run" style="visibility: hidden">Run</button>
+            <button id="disconnect" style="visibility: hidden">Stop</button>
+        </div>
+        <div>
             <h3 id="dataField">Select a device to begin.</h3>
             <iframe
                 id="map"
@@ -18,13 +24,9 @@
                 marginheight="0"
                 marginwidth="0"
                 src="https://www.openstreetmap.org/export/embed.html?bbox=-93.92452239990234%2C37.8962595237529%2C-93.41125488281251%2C38.12969560730616&amp;layer=mapnik&amp;marker=89.01307049147015%2C-93.66788864135742"
-                style="border: 1px solid black"
+                style="visibility: hidden"
             ></iframe>
         </div>
-        <div>
-            <button id="connect">Select Device</button>
-            <button id="run" style="visibility: hidden">Run</button>
-            <button id="disconnect" style="visibility: hidden">Stop</button>
-        </div>
+        
     </body>
 </html>

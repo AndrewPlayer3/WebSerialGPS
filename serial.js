@@ -11,6 +11,7 @@ let keepReading = true,
 let data_string = ''
 let data_arr = []
 let decoder = new TextDecoder('UTF-8')
+let showMap = false
 
 
 async function openGPSPort() {
@@ -83,10 +84,10 @@ async function readUntilClosed() {
                     if (data.startsWith('$GPGGA')) {
                         try {
                             let message = new GPGGA(data)
-                            let dataField = document.querySelector('#dataField')
-                            dataField.innerText = message.toString()
-                            if (message.latitude != 0 && message.longitude != 0)    
-                                await getMapURL(message.latitude, message.longitude)
+                            if (message.latitude != 0 && message.longitude != 0) {
+                                document.querySelector('#dataField').innerText = message.toStringVerbose()
+                                if (showMap) await getMapURL(message.latitude, message.longitude)
+                            }
                         } catch (error) {
                             console.log("nmea.js script is likely missing: ", error.message)
                         }
@@ -109,10 +110,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     let connect_button = document.querySelector('#connect')
     let disconnect_button = document.querySelector('#disconnect')
     let run_button = document.querySelector('#run')
+    let map_button = document.querySelector('#map-btn')
 
     connect_button.addEventListener('click', async () => {
         await openGPSPort()
         run_button.setAttribute('style', 'visibility:visible')
+        document.querySelector('#dataField').innerText = 'Click run to begin.'
     })
 
     disconnect_button.addEventListener('click', async () => {
@@ -127,6 +130,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         disconnect_button.setAttribute('style', 'visibility: visible')
         document.querySelector('#dataField').innerText = 'Data: Loading...'
         readUntilClosed()
+    })
+
+    map_button.addEventListener('click', async () => {
+        showMap = !showMap
+        visibility = showMap 
+            ? "visible"
+            : "hidden"
+        document.querySelector('#map').setAttribute('style', `visibility: ${visibility}`)
     })
 })
 
