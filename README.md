@@ -35,6 +35,9 @@ Once the page is open simply click Select Device, do that, and then click run.
  ...             -- 14 - DGPS reference station id   (can leave blank)
  *75             -- 14 - Checksum (same array position as last piece.)
  ```
+
+### Screenshot:
+ ![mapss](https://user-images.githubusercontent.com/19739107/164237236-48d7f727-e86b-4a24-aac8-0e6ac4763427.png)
   
 ### Further Resources:
   - [In-Depth NMEA GPS Sentence Information](http://aprs.gids.nl/nmea/)
