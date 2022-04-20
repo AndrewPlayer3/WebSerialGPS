@@ -1,4 +1,12 @@
-class NMEAGPSMessage {
+/*/
+ *  Name: nmea.js
+ *  Author: Andrew Player
+ *  Description: Classes for handling NMEA 1803 GPS messages.
+ *  Note: Check the README for more resources on NMEA Sentences.
+/*/ 
+
+class NMEAGPSMessage 
+{
 /*/ NMEA GPS Message Class 
  *  
  *  Basic Standards:
@@ -16,16 +24,18 @@ class NMEAGPSMessage {
     talker       = '$GP' // $GPGGA -- $GP is talker, GGA is type
     type         = ''    //
 
-    constructor(message) {
+    constructor(message) 
+    {
         this.#validateMessage(message)
         this.message      = message
         this.messageArray = this.message.split(',')
         this.type         = this.messageArray[0].substring(3, 6)
     }
 
-    #validateMessage(message) { 
+
     /* Validate the message against NMEA Standards */
-        
+    #validateMessage(message)
+    {         
         if (!message.startsWith(this.talker)) 
             throw 'Invalid NMEA GPS Talker! Message does not start with $GP:\n' + message
 
@@ -45,7 +55,8 @@ class NMEAGPSMessage {
             throw 'Invalid NMEA GPS Message! Message has no checksum:\n' + message
     
         let char = chars.charCodeAt(0)
-        for (let i = 1; i < chars.length; i++) {
+        for (let i = 1; i < chars.length; i++) 
+        {
             char = char ^ chars.charCodeAt(i);
         }
         
@@ -54,7 +65,9 @@ class NMEAGPSMessage {
     }
 }
 
-class GPGGA extends NMEAGPSMessage {
+
+class GPGGA extends NMEAGPSMessage 
+{
 /*/ GGA Message Standard:
  *  ---------------------
  *  $GPGGA,         -- 00 - Message Type: GPGGA
@@ -91,7 +104,8 @@ class GPGGA extends NMEAGPSMessage {
     dilution     =  0
     geoidHeight  =  0
 
-    constructor(message) {        
+    constructor(message) 
+    {        
         super(message)
 
         if (!message.substring(3).startsWith(this.type))
@@ -110,43 +124,51 @@ class GPGGA extends NMEAGPSMessage {
         this.geoidHeight  = this.messageArray[11]
     }
 
-    #setLatitude() {
+    #setLatitude() 
+    {
         this.lat      = this.messageArray[2]
         let degrees   = Number(this.lat.substring(0, 2))
         let minutes   = Number(this.lat.substring(2))
         this.latitude = degrees + minutes / 60
     }
 
-    #setLongitude() {
+    #setLongitude() 
+    {
         this.lon       = this.messageArray[4]
         let degrees    = Number(this.lon.substring(0, 3))
         let minutes    = Number(this.lon.substring(3))
         this.longitude = degrees + minutes / 60
     }
 
-    #setTime() {
+    #setTime() 
+    {
         let time = this.messageArray[1]
         this.utc = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}UTC` // HH:MM:SS.SS
         this.timestamp = Number(time)
     }
 
-    latString() {
+    latString() 
+    {
         return `${this.latitude.toPrecision(10) }${this.latDirection}`
     }
 
-    lonString() {
+    lonString() 
+    {
         return `${this.longitude.toPrecision(10)}${this.lonDirection}`
     }
 
-    altString() {
+    altString() 
+    {
         return `${this.altitude}${this.messageArray[10]}`
     }
 
-    geoidString() {
+    geoidString() 
+    {
         return `${this.geoidHeight}${this.messageArray[12]}`
     }
 
-    toString() {
+    toString() 
+    {
         return  `Latitude:   ${this.latString()}\n` +
                 `Longitude:  ${this.lonString()}\n` +
                 `Altitude:   ${this.altString()}\n` +
@@ -154,7 +176,8 @@ class GPGGA extends NMEAGPSMessage {
                 `Time:       ${this.utc}`
     }
 
-    toStringVerbose() {
+    toStringVerbose() 
+    {
         return  `Latitude:   ${this.latString()}\n` +
                 `Longitude:  ${this.lonString()}\n` +
                 `Altitude:   ${this.altString()}\n` +
