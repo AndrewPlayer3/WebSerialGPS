@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>WebUSB API</title>
+        <script>
+            document.addEventListener('DOMContentLoaded', event => {
+                let btn = document.querySelector('#connect');
+                let gpsDevice;
+                btn.addEventListener('click', () => {
+                    navigator.serial.requestPort({filters: [{usbVendorId: 0x1546}]})
+                    .then((port) => {
+                        gpsDevicePort = port;
+                        console.log('Selected Device: ', gpsDevicePort.getInfo())
+                        gpsDevicePort.open({baudRate: 9600, dataBits: 8, endBits: 1})
+                            .then(() => {
+                                console.log('Successfully Opened Port: ', gpsDevicePort.getInfo());
+                                var i = 0;
+                                var v = ''
+                                let needConcat = false;
+                                let data_string = '';
+                                let data_arr = [];
+                                let decoder = new TextDecoder('UTF-8')
+                                const reader = gpsDevicePort.readable.getReader();
+                                while(i < 20) {
+                                    reader.read().then((value, done) => {
+                                        let temp_string = needConcat 
+                                            ? data_string + decoder.decode(value.value) 
+                                            : decoder.decode(value.value)
+                                        data_arr = temp_string.split('\r\n')
+                                        if (!temp_string.endsWith('\r\n')){
+                                            needConcat = true
+                                            data_string += data_arr.pop();
+                                        } else {
+                                            needConcat = false;
+                                            data_string = '';
+                                        }
+                                        for (let j = 0; j < data_arr.length; j++) {
+                                            let data = data_arr[j] 
+                                            if (data != '') console.log(data)
+                                            if (data.startsWith('$GPGGA')) {
+                                                const dataField = document.querySelector('#dataField');
+                                                const dataElement = document.createElement('h3')
+                                                dataElement.setAttribute("id", "dataField")
+                                                dataElement.innerText = 'Data: ' + data;
+                                                dataField.replaceWith(dataElement);
+                                            }
+                                        }
+                                        data_arr = []
+                                        return 'something'
+                                    })
+                                    i++;
+                                }
+                                console.log(v)
+                            })
+                    })
+                    .catch(error => {
+                        console.log("Error requesting device: ", error.message);
+                    })
+                })
+            })
+        </script>
+    </head>
+    <body>
+        <h1>WebUSB API Test</h1>
+        <div>
+            <button id="connect">Select Device</button>
+            <button id="disconnect" style="visibility: hidden">Stop</button>
+        </div>
+        <h3 id="dataField">Data: </h3>
+    </body>
+</html>
+
