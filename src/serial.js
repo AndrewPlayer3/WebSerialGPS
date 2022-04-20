@@ -83,7 +83,7 @@ async function parseNMEAMessage(data)
     if (data.startsWith('$GPGGA')) 
     {
         try 
-        {
+        {// TODO: Add support for the other message types.
             let message = new GPGGA(data)
             return message
         } catch (error) 
