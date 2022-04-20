@@ -36,10 +36,10 @@ Once the page is open simply click Select Device, do that, and then click run.
  *75             -- 14 - Checksum (same array position as last piece.)
  ```
 
-### Screenshot:
+### Screenshot
  ![mapss](https://user-images.githubusercontent.com/19739107/164237236-48d7f727-e86b-4a24-aac8-0e6ac4763427.png)
   
-### Further Resources:
+### Further Resources
   - [In-Depth NMEA GPS Sentence Information](http://aprs.gids.nl/nmea/)
   - [NMEA GPS Wikipedia](https://en.wikipedia.org/wiki/NMEA_0183)
   - [Google's WebSerial API Docs](https://web.dev/serial/)
