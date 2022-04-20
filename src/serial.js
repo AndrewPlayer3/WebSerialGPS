@@ -112,15 +112,15 @@ async function readUntilClosed()
                 if (done) // "done" is when the user clicks stop,
                     break //  not necessarily when the reader is done.
                 
-                let temp_string = needConcat                
+                let temp_string = needConcat              
                     ? data_string + decoder.decode(value) 
-                    : decoder.decode(value)
-                data_arr = temp_string.split('\r\n')
+                    : decoder.decode(value)               
+                data_arr = temp_string.split('\r\n')      
                 
-                if (!temp_string.endsWith('\r\n')) 
-                {
-                    needConcat = true
-                    data_string += data_arr.pop()
+                if (!temp_string.endsWith('\r\n')) // Reading is asyncronous, so there is no guarentee of
+                {                                  // position in the data stream, and there is no readline(). 
+                    needConcat = true              // So, we check for no line end \r\n and add it to the next
+                    data_string += data_arr.pop()  // message until a line end is reached.
                 } else 
                 {
                     needConcat = false
