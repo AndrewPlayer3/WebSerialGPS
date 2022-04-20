@@ -37,17 +37,19 @@ async function openGPSPort() {
 
 async function getMapURL(latitude, longitude) {
 
-    let north_bound = latitude + 0.5
-    let south_bound = latitude - 0.5
-    let east_bound  = longitude + 0.5
-    let west_bound  = longitude - 0.5
+    let north_bound = latitude + 0.0005
+    let south_bound = latitude - 0.0005
+    let east_bound  = longitude - 0.0005
+    let west_bound  = longitude + 0.0005
 
     let url_base = "https://www.openstreetmap.org/export/embed.html?"
     let url_box = `bbox=${-west_bound}%2C${south_bound}%2C${-east_bound}%2C${north_bound}`
-    let url_layer = "&amp;layer=mapnik"
-    let url_marker = `&amp;marker=${latitude}%2C${-longitude}`
+    let url_layer = "&layer=mapnik"
+    let url_marker = `&marker=${latitude}%2C${-longitude}`
 
     let url = url_base + url_box + url_layer + url_marker
+
+    console.log(url)
 
     let map = document.querySelector('#map');
     map.setAttribute('src', url)
@@ -83,7 +85,8 @@ async function readUntilClosed() {
                             let message = new GPGGA(data)
                             let dataField = document.querySelector('#dataField')
                             dataField.innerText = message.toString()
-                            await getMapURL(message.latitude, message.longitude)
+                            if (message.latitude != 0 && message.longitude != 0)    
+                                await getMapURL(message.latitude, message.longitude)
                         } catch (error) {
                             console.log("nmea.js script is likely missing: ", error.message)
                         }
