@@ -24,17 +24,14 @@ async function openGPSPort() {
                 },                       // You may need to add your GPS's vid here ❗
             ],
         })
-
         console.log(
             'Selected Port: ', gpsPort.getInfo()
         )
-
         await gpsPort.open({
             baudRate: 9600,
             dataBits: 8,
             endBits: 1,
         })
-
         console.log(
             'The selected port has been opened.'
         )
