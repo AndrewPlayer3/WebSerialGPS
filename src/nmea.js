@@ -252,24 +252,27 @@ class GPGSA extends NMEAGPSMessage
             throw `SVID Index Out of Bounds: ${index}`
 
         let svid  = this.messageArray[index + 3]
-        
         if (svid != '')
+        {
             if      (Number(svid) < 33) return `${svid} GPS`
             else if (Number(svid) < 65) return `${svid} SBAS`
             else if (Number(svid) < 97) return `${svid} GLO`
-            else 
-                throw 'Invalid SVID Value'
-        else
+            else throw 'Invalid SVID Value'
+        } else
+        {
             return 'null'
+        }
     }
 
     toString() 
     {
         let svids = ``
-        this.SVIDs.forEach((_, index) => {
-            svids += 'SVID: ' + this.SVIDString(index) + '\n'
-            index++
-        })
+        this.SVIDs.forEach(
+            (_, index) => {
+                svids += 'SVID: ' + this.SVIDString(index) + '\n'
+                index++
+            }
+        )
         return `Mode: ${this.mode}\n` +
                 svids +
                `PDOP: ${this.PDOP}\n` +
