@@ -149,7 +149,7 @@ class GPGGA extends NMEAGPSMessage
 
     latString() 
     {
-        return `${this.latitude.toPrecision(10) }${this.latDirection}`
+        return `${this.latitude.toPrecision(10)}${this.latDirection}`
     }
 
     lonString() 
