@@ -91,20 +91,21 @@ class GPGLL extends NMEAGPSMessage
     lonDirection = 'N/A'
     timestamp = 0
     utc = 'HH:MM:SS.SS'
+    validity = ''
+    mode = ''
 
     constructor(message)
     {
         super(message)
 
-        if (!message.substring(3).startsWith(this.type))
-            throw 'Invalid GPGLL Message! Message does not start with $GPGLL:\n' + message
-        
         this._setTime(5)
         this._setLatitude(1)
         this._setLongitude(3)
 
         this.latDirection = this.messageArray[2]
         this.lonDirection = this.messageArray[4]
+        this.validity = this.messageArray[6]
+        this.mode = this.messageArray[7]
     }
 
     _setLatitude(index) 
@@ -182,9 +183,6 @@ class GPGGA extends GPGLL
     constructor(message) 
     {        
         super(message)
-
-        if (!message.substring(3).startsWith(this.type))
-            throw 'Invalid GPGGA Message! Message does not start with $GPGGA:\n' + message
 
         this._setTime(1)
         this._setLatitude(2)
@@ -268,9 +266,6 @@ class GPGSA extends NMEAGPSMessage
     constructor(message)
     {
         super(message)
-
-        if (!message.substring(3).startsWith(this.type))
-            throw 'Invalid GPGGA Message! Message does not start with $GPGGA:\n' + message
 
         this.#setSVIDs()    
         
@@ -372,3 +367,64 @@ class GPVTG extends NMEAGPSMessage
     }
 
 }
+
+
+class GPRMC extends GPGLL
+{
+/*/ RMC Message Standard
+$GPRMC,     -- 00 - Position and Speed over Ground
+161229.487, -- 01 - Timestamp UTC HHMMSS.SS
+A,          -- 02 - A is valid data, v is invalid data
+3723.2475,  -- 03 - Latitude 37 degrees 23.2475 minutes
+N,          -- o4 - Latitude Direction N or S
+12158.3416, -- 05 - Longitude 121 degrees 58.3416 minutes
+W,          -- 06 - Longitude Direction W or E
+0.13,       -- 07 - Speed over Ground (knots)
+309.62,     -- 08 - Course over Ground (degrees)
+120598,     -- 09 - Date DDYYMM
+...,        -- 10 - Magnetic Variation, Degrees, E or W
+...         -- 11 - Mode: A is Autonomous, D is DPGS, E is DR
+*10         -- 12 - Checksum
+/*/
+
+    type = 'RMC'
+
+    speed = 0
+    course = 0
+    date = 'ddyymm'
+    variation = 0
+    mode = ''
+
+    constructor(message)
+    {
+        super(message)
+
+        this.speed = Number(this.messageArray[7])
+        this.course = Number(this.messageArray[8])
+        this.date = Number(this.messageArray[9])
+        this.variation = this.messageArray[10]
+        this.mode = this.messageArray[11]
+    }
+
+    toString()
+    {
+        return `Speed (knots): ${this.speed}\n` +
+               `Course (degrees):${this.course}\n`
+    }
+
+    toStringVerbose()
+    {
+        return `Latitude: ${this.latString()}\n` +
+               `Longitude: ${this.lonString()}\n` +
+               `Speed (knots): ${this.speed}\n` +
+               `Course (degrees): ${this.course}\n` + 
+               `Time: ${this.utc}\n` +
+               `Date: ${this.date}\n` +
+               `Magnetic Variation: ${this.variation}\n` +
+               `Mode: ${this.mode}`
+    }
+}
+
+let message = "$GPRMC,042605.00,A,6451.51631,N,14750.13566,W,0.922,,200422,,,A*6E"
+let gprmc = new GPRMC(message)
+console.log(gprmc.toStringVerbose())
