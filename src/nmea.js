@@ -70,7 +70,7 @@ class GPGGA extends NMEAGPSMessage
 {
 /*/ GGA Message Standard:
  *  ---------------------
- *  $GPGGA,         -- 00 - Message Type: GPGGA
+ *  $GPGGA,         -- 00 - Global Positioning System Fix Data
  *  075909.00,      -- 01 - Timestamp
  *  6451.53390,     -- 02 - Latitude            -- 64  degrees, 51.53390 minutes
  *  N,              -- 03 - Latitude Direction
@@ -186,5 +186,77 @@ class GPGGA extends NMEAGPSMessage
                 `Quality:    ${this.quality}\n` +
                 `Dilution:   ${this.dilution}\n` + 
                 `Time:       ${this.utc}`
+    }
+}
+
+
+class GPGSA extends NMEAGPSMessage 
+{
+/*/ GSA Message Standard
+ *  ---------------------
+ *  $GPGSA, -- 00 - GPS DOP and active satellites
+ *  A,      -- 01 - Mode: 'M' is Manual 2D or 3D, 'A' is Automatic 2D and 3D
+ *  3,      -- 02 - Mode: '1' is Fix not Available, '2' is 2D, '3' is 3D 
+ *  27,     -- 03 - SVID used for position fix (null if unused)
+ *  23,     -- 04 - SVID used for position fix (null if unused)
+ *  10,     -- 05 - SVID used for position fix (null if unused) 
+ *  15,     -- 06 - SVID used for position fix (null if unused) 
+ *  18,     -- 07 - SVID used for position fix (null if unused) 
+ *  16,     -- 08 - SVID used for position fix (null if unused) 
+ *  ...,    -- 09 - SVID used for position fix (null if unused) 
+ *  ...,    -- 10 - SVID used for position fix (null if unused) 
+ *  ...,    -- 11 - SVID used for position fix (null if unused) 
+ *  ...,    -- 12 - SVID used for position fix (null if unused) 
+ *  ...,    -- 13 - SVID used for position fix (null if unused) 
+ *  ...,    -- 14 - SVID used for position fix (null if unused) 
+ *  2.25,   -- 15 - PDOP: ? Dilution of Precision
+ *  1.82,   -- 16 - HDOP: Horizontal Dilution of Precision
+ *  1.33    -- 17 - VDOP: Vertical Dilution of Precision
+ *  *02     -- 17 - Checksum
+/*/
+
+    type   = 'GSA'
+    
+    mode   =  ''
+    method =  ''
+    SVIDs  = ['', '', '', '', '', '', '', '', '', '', '', '']
+    PDOP   = 0
+    HDOP   = 0
+    VDOP   = 0
+
+    constructor(message)
+    {
+        super(message)
+
+        if (!message.substring(3).startsWith(this.type))
+            throw 'Invalid GPGGA Message! Message does not start with $GPGGA:\n' + message
+
+        this.#setSVIDs()    
+        
+        this.mode   = this.messageArray[1 ]
+        this.method = this.messageArray[2 ]
+        this.PDOP   = this.messageArray[15]
+        this.HDOP   = this.messageArray[16]
+        this.VDOP   = this.messageArray[17]
+    }
+
+    #setSVIDs()
+    {
+        for(let i = 0; i < 12; i++)
+        {
+            this.SVIDs[i] = this.messageArray[i + 3]
+        }
+    }
+
+    toString() {
+        let svidString = ``
+        this.SVIDs.forEach((SVID) => {
+            svidString += `Satellite ID: ${SVID}\n`
+        })
+        return `Mode: ${this.mode} -- ${this.method}\n` +
+                svidString +
+               `PDOP: ${this.PDOP}\n` +
+               `HDOP: ${this.HDOP}\n` +
+               `VDOP: ${this.VDOP}`
     }
 }
