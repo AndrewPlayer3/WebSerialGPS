@@ -60,13 +60,96 @@ class NMEAGPSMessage
             char = char ^ chars.charCodeAt(i);
         }
         
-        if (char.toString(16) !== checksum)
+        if (char.toString(16) !== checksum.toLowerCase())
             throw `Corrupted NMEA GPS Message! Checksum is ${checksum} but calculated ${char.toString(16)} for message:\n` + message
     }
 }
 
 
-class GPGGA extends NMEAGPSMessage 
+class GPGLL extends NMEAGPSMessage
+{
+/*/ GLL Message Standard:
+ *  --------------------- 
+ *  $GPGLL,     -- 00 - Position Fix
+ *  3723.2475,  -- 01 - Latitude            -- 37  degrees 23.2475 minutes
+ *  N,          -- 02 - Latitude Direction  -- N (or S)
+ *  12158.3416, -- 03 - Longitude           -- 121 degress 58.3416 minutes
+ *  W,          -- 04 - Longitude Direction -- W (or E)
+ *  161229.487, -- 05 - Timestamp
+ *  A,          -- 06 - Status: A is Data Valid, V is Data Invalid
+ *  A           -- 07 - Mode: A is Automonous, D is DGPS, E is DR
+ *  *41         -- 08 - Checksum
+/*/
+
+    type = 'GLL'
+
+    lat = '0000.00000'
+    latitude = 0
+    latDirection = 'N/A'
+    lon = '00000.00000'
+    longitude = 0
+    lonDirection = 'N/A'
+    timestamp = 0
+    utc = 'HH:MM:SS.SS'
+
+    constructor(message)
+    {
+        super(message)
+
+        if (!message.substring(3).startsWith(this.type))
+            throw 'Invalid GPGLL Message! Message does not start with $GPGLL:\n' + message
+        
+        this._setTime(5)
+        this._setLatitude(1)
+        this._setLongitude(3)
+
+        this.latDirection = this.messageArray[2]
+        this.lonDirection = this.messageArray[4]
+    }
+
+    _setLatitude(index) 
+    {
+        this.lat      = this.messageArray[index]
+        let degrees   = Number(this.lat.substring(0, 2))
+        let minutes   = Number(this.lat.substring(2))
+        this.latitude = degrees + minutes / 60
+    }
+
+    _setLongitude(index) 
+    {
+        this.lon       = this.messageArray[index]
+        let degrees    = Number(this.lon.substring(0, 3))
+        let minutes    = Number(this.lon.substring(3))
+        this.longitude = degrees + minutes / 60
+    }
+
+    _setTime(index) 
+    {
+        let time = this.messageArray[index]
+        this.utc = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}UTC` // HH:MM:SS.SS
+        this.timestamp = Number(time)
+    }
+
+    latString() 
+    {
+        return `${this.latitude.toPrecision(10)}${this.latDirection}`
+    }
+
+    lonString() 
+    {
+        return `${this.longitude.toPrecision(10)}${this.lonDirection}`
+    }
+
+    toString() 
+    {
+        return  `Latitude:   ${this.latString()}\n` +
+                `Longitude:  ${this.lonString()}\n` +
+                `Time:       ${this.utc}`
+    }
+}
+
+
+class GPGGA extends GPGLL 
 {
 /*/ GGA Message Standard:
  *  ---------------------
@@ -90,14 +173,6 @@ class GPGGA extends NMEAGPSMessage
 
     type = 'GGA'
 
-    timestamp    =  0    // hhmmss.ss UTC
-    utc          = 'HH:MM:SS.MS'
-    lat          = '0000.00000'
-    latitude     =  0
-    latDirection = 'N/A' // 'N' or 'S'
-    lon          = '00000.00000'
-    longitude    =  0
-    lonDirection = 'N/A' // 'W' or 'E'
     altitude     =  0
     satellites   =  0
     quality      =  0
@@ -111,9 +186,9 @@ class GPGGA extends NMEAGPSMessage
         if (!message.substring(3).startsWith(this.type))
             throw 'Invalid GPGGA Message! Message does not start with $GPGGA:\n' + message
 
-        this.#setTime()
-        this.#setLatitude()
-        this.#setLongitude()
+        this._setTime(1)
+        this._setLatitude(2)
+        this._setLongitude(4)
 
         this.latDirection = this.messageArray[3 ]
         this.lonDirection = this.messageArray[5 ]
@@ -122,39 +197,6 @@ class GPGGA extends NMEAGPSMessage
         this.dilution     = this.messageArray[8 ]
         this.altitude     = this.messageArray[9 ]
         this.geoidHeight  = this.messageArray[11]
-    }
-
-    #setLatitude() 
-    {
-        this.lat      = this.messageArray[2]
-        let degrees   = Number(this.lat.substring(0, 2))
-        let minutes   = Number(this.lat.substring(2))
-        this.latitude = degrees + minutes / 60
-    }
-
-    #setLongitude() 
-    {
-        this.lon       = this.messageArray[4]
-        let degrees    = Number(this.lon.substring(0, 3))
-        let minutes    = Number(this.lon.substring(3))
-        this.longitude = degrees + minutes / 60
-    }
-
-    #setTime() 
-    {
-        let time = this.messageArray[1]
-        this.utc = `${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4)}UTC` // HH:MM:SS.SS
-        this.timestamp = Number(time)
-    }
-
-    latString() 
-    {
-        return `${this.latitude.toPrecision(10)}${this.latDirection}`
-    }
-
-    lonString() 
-    {
-        return `${this.longitude.toPrecision(10)}${this.lonDirection}`
     }
 
     altString() 
@@ -192,7 +234,7 @@ class GPGGA extends NMEAGPSMessage
 
 class GPGSA extends NMEAGPSMessage 
 {
-/*/ GSA Message Standard
+/*/ GSA Message Standard:
  *  ---------------------
  *  $GPGSA, -- 00 - GPS DOP and active satellites
  *  A,      -- 01 - Mode: 'M' is Manual 2D or 3D, 'A' is Automatic 2D and 3D
@@ -204,7 +246,7 @@ class GPGSA extends NMEAGPSMessage
  *  18,     -- 07 - SVID: ...
  *  16,     -- 08 - SVID: ...
  *  ...,    -- 09 - SVID: ...
- *  ...,    -- 10 - SVID: ... 
+ *  ...,    -- 10 - SVID: ...
  *  ...,    -- 11 - SVID: ...
  *  ...,    -- 12 - SVID: ...
  *  ...,    -- 13 - SVID: ...
@@ -282,4 +324,51 @@ class GPGSA extends NMEAGPSMessage
                `HDOP: ${this.HDOP}\n` +
                `VDOP: ${this.VDOP}`
     }
+}
+
+class GPVTG extends NMEAGPSMessage
+{
+/*/ VTG Message Standard:
+ *  --------------------- 
+ *  $GPVTG, -- 00 - Speed and Course Information
+ *  309.62, -- 01 - Course in Degrees
+ *  T,      -- 02 - Course Reference: True
+ *  ...,    -- 03 - Course in Degrees
+ *  M,      -- 04 - Course Reference: Magnetic
+ *  0.13,   -- 05 - Horizontal Speed
+ *  N,      -- 06 - Unit: Knots
+ *  0.2,    -- 07 - Horizontal Speed
+ *  K,      -- 08 - Unit: Kilometers per hour
+ *  A       -- 09 - Mode: A is Autonomous, D is DGPS, E is DR
+ *  *23     -- 10 - Checksum
+/*/
+
+    type = 'VTG'
+
+    courseTrue = 0
+    courseMagnetic = 0
+    speedKnots = 0
+    speedKMH   = 0
+    mode = ''
+
+    constructor(message)
+    {
+        super(message)
+
+        this.courseTrue = Number(this.messageArray[1])
+        this.courseMagnetic = Number(this.messageArray[3])
+        this.speedKnots = Number(this.messageArray[5])
+        this.speedKMH = Number(this.messageArray[7])
+        this.mode = this.messageArray[9]
+    }
+
+    toString()
+    {
+        return `Course (true): ${this.courseTrue}\n` +
+               `Course (magnetic: ${this.courseMagnetic}\n)` +
+               `Speed  (knots): ${this.speedKnots}\n` +
+               `Speed  (K/h): ${this.speedKMH}\n` +
+               `Mode: ${this.mode}`
+    }
+
 }
