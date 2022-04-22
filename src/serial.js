@@ -50,7 +50,9 @@ async function openGPSPort()
             {
                 baudRate: 9600,
                 dataBits: 8,
-                endBits: 1,
+                stopBits: 1,
+                parity: 'none',
+                flowControl: 'hardware'
             }
         )
         console.log(
