@@ -102,8 +102,6 @@ class GPGLL extends NMEAGPSMessage
         this._setLatitude(1)
         this._setLongitude(3)
 
-        this.latDirection = this.messageArray[2]
-        this.lonDirection = this.messageArray[4]
         this.validity = this.messageArray[6]
         this.mode = this.messageArray[7]
     }
@@ -111,6 +109,7 @@ class GPGLL extends NMEAGPSMessage
     _setLatitude(index) 
     {
         this.lat      = this.messageArray[index]
+        this.latDirection = this.messageArray[index + 1]
         let degrees   = Number(this.lat.substring(0, 2))
         let minutes   = Number(this.lat.substring(2))
         this.latitude = degrees + minutes / 60
@@ -119,6 +118,7 @@ class GPGLL extends NMEAGPSMessage
     _setLongitude(index) 
     {
         this.lon       = this.messageArray[index]
+        this.lonDirection = this.messageArray[index + 1]
         let degrees    = Number(this.lon.substring(0, 3))
         let minutes    = Number(this.lon.substring(3))
         this.longitude = degrees + minutes / 60
@@ -188,8 +188,6 @@ class GPGGA extends GPGLL
         this._setLatitude(2)
         this._setLongitude(4)
 
-        this.latDirection = this.messageArray[3 ]
-        this.lonDirection = this.messageArray[5 ]
         this.quality      = this.messageArray[6 ]
         this.satellites   = this.messageArray[7 ]
         this.dilution     = this.messageArray[8 ]
@@ -398,6 +396,10 @@ W,          -- 06 - Longitude Direction W or E
     constructor(message)
     {
         super(message)
+
+        this._setTime(1)
+        this._setLatitude(3)
+        this._setLongitude(5)
 
         this.speed = Number(this.messageArray[7])
         this.course = Number(this.messageArray[8])
