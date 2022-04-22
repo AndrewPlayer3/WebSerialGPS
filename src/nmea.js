@@ -197,19 +197,19 @@ class GPGSA extends NMEAGPSMessage
  *  $GPGSA, -- 00 - GPS DOP and active satellites
  *  A,      -- 01 - Mode: 'M' is Manual 2D or 3D, 'A' is Automatic 2D and 3D
  *  3,      -- 02 - Mode: '1' is Fix not Available, '2' is 2D, '3' is 3D 
- *  27,     -- 03 - SVID used for position fix (null if unused)
- *  23,     -- 04 - SVID used for position fix (null if unused)
- *  10,     -- 05 - SVID used for position fix (null if unused) 
- *  15,     -- 06 - SVID used for position fix (null if unused) 
- *  18,     -- 07 - SVID used for position fix (null if unused) 
- *  16,     -- 08 - SVID used for position fix (null if unused) 
- *  ...,    -- 09 - SVID used for position fix (null if unused) 
- *  ...,    -- 10 - SVID used for position fix (null if unused) 
- *  ...,    -- 11 - SVID used for position fix (null if unused) 
- *  ...,    -- 12 - SVID used for position fix (null if unused) 
- *  ...,    -- 13 - SVID used for position fix (null if unused) 
- *  ...,    -- 14 - SVID used for position fix (null if unused) 
- *  2.25,   -- 15 - PDOP: ? Dilution of Precision
+ *  27,     -- 03 - SVID -- GPS is 1..32, SBAS is 33..64, GLO is 65..96
+ *  23,     -- 04 - SVID -- null if unused
+ *  10,     -- 05 - SVID -- ...
+ *  15,     -- 06 - SVID -- ...
+ *  18,     -- 07 - SVID -- ...
+ *  16,     -- 08 - SVID -- ...
+ *  ...,    -- 09 - SVID -- ...
+ *  ...,    -- 10 - SVID -- ... 
+ *  ...,    -- 11 - SVID -- ...
+ *  ...,    -- 12 - SVID -- ...
+ *  ...,    -- 13 - SVID -- ...
+ *  ...,    -- 14 - SVID -- ...
+ *  2.25,   -- 15 - PDOP: Positional Dilution of Precision
  *  1.82,   -- 16 - HDOP: Horizontal Dilution of Precision
  *  1.33    -- 17 - VDOP: Vertical Dilution of Precision
  *  *02     -- 17 - Checksum
@@ -218,7 +218,6 @@ class GPGSA extends NMEAGPSMessage
     type   = 'GSA'
     
     mode   =  ''
-    method =  ''
     SVIDs  = ['', '', '', '', '', '', '', '', '', '', '', '']
     PDOP   = 0
     HDOP   = 0
@@ -233,11 +232,10 @@ class GPGSA extends NMEAGPSMessage
 
         this.#setSVIDs()    
         
-        this.mode   = this.messageArray[1 ]
-        this.method = this.messageArray[2 ]
+        this.mode   = this.messageArray[1 ] + this.messageArray[2 ]
         this.PDOP   = this.messageArray[15]
         this.HDOP   = this.messageArray[16]
-        this.VDOP   = this.messageArray[17]
+        this.VDOP   = this.messageArray[17].split('*')[0]
     }
 
     #setSVIDs()
@@ -248,13 +246,32 @@ class GPGSA extends NMEAGPSMessage
         }
     }
 
-    toString() {
-        let svidString = ``
-        this.SVIDs.forEach((SVID) => {
-            svidString += `Satellite ID: ${SVID}\n`
+    SVIDString(index) 
+    {
+        if (index + 3 < 3 || index + 3 > 14)
+            throw `SVID Index Out of Bounds: ${index}`
+
+        let svid  = this.messageArray[index + 3]
+        
+        if (svid != '')
+            if      (Number(svid) < 33) return `${svid} GPS`
+            else if (Number(svid) < 65) return `${svid} SBAS`
+            else if (Number(svid) < 97) return `${svid} GLO`
+            else 
+                throw 'Invalid SVID Value'
+        else
+            return 'null'
+    }
+
+    toString() 
+    {
+        let svids = ``
+        this.SVIDs.forEach((_, index) => {
+            svids += 'SVID: ' + this.SVIDString(index) + '\n'
+            index++
         })
-        return `Mode: ${this.mode} -- ${this.method}\n` +
-                svidString +
+        return `Mode: ${this.mode}\n` +
+                svids +
                `PDOP: ${this.PDOP}\n` +
                `HDOP: ${this.HDOP}\n` +
                `VDOP: ${this.VDOP}`
