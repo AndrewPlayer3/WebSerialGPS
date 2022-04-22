@@ -11,10 +11,21 @@ let reader,
 let keepReading = true,
     needConcat  = false,
     showMap     = false,
-    portIsOpen  = false
+    portIsOpen  = false,
+    loaded      = false
 let data_string = ''
 let data_arr    = []
+let lat_state   = 0
+let lon_state   = 0
 let decoder     = new TextDecoder('UTF-8')
+
+let logs = 
+{
+    positioning: [],
+    quality: []
+}
+
+var map
 
 
 /* Request access to the GPS's port, and open it so it can be read. */
@@ -56,43 +67,96 @@ async function openGPSPort()
 }
 
 
-/* Build the OpenStreetMap Embed URL to display the given location. */
-async function getMapURL(latitude, longitude) 
-{
-    let north_bound = latitude + 0.0005
-    let south_bound = latitude - 0.0005
-    let east_bound  = longitude - 0.0005
-    let west_bound  = longitude + 0.0005
+async function checkBounds() {
+    
+    let bounds = map.getBounds()
 
-    // TODO: The bounding box likely doesn't need to be updated every time,
-    //       maybe set a distance threshold and only update the marker.
-    let url_base   = "https://www.openstreetmap.org/export/embed.html?"
-    let url_box    = `bbox=${-west_bound}%2C${south_bound}%2C${-east_bound}%2C${north_bound}`
-    let url_layer  = "&layer=mapnik"
-    let url_marker = `&marker=${latitude}%2C${-longitude}`
-    let url        = url_base + url_box + url_layer + url_marker
-
-    let map = document.querySelector('#map');
-    map.setAttribute('src', url)
+    let passedNorth = Math.abs(lat_state) > Math.abs(bounds.getNorth()) - 0.0005
+    let passedSouth = Math.abs(lat_state) < Math.abs(bounds.getSouth()) + 0.0005
+    let passedEast  = Math.abs(lon_state) < Math.abs(bounds.getEast( )) + 0.0005
+    let passedWest  = Math.abs(lon_state) > Math.abs(bounds.getWest( )) - 0.0005
+    
+    if (
+        passedNorth || passedSouth || passedEast || passedWest
+    ) {
+        await map.setView(new L.LatLng(lat_state, -lon_state))
+    }
 }
 
 
 /* Parse an NMEA GPS Sentence to get a more displayable format. */ 
 async function parseNMEAMessage(data)
 {
-    if (data.startsWith('$GPGGA')) 
+    try
     {
-        try 
-        {// TODO: Add support for the other message types.
-            let message = new GPGGA(data)
-            return message
-        } catch (error) 
+        let message
+        switch (data.substring(0, 6))
         {
-            console.log(
-                "Error Processing GPGGA Sentence: ", error.message
-            )
-            return null
+            case '$GPGGA':
+                message = new GPGGA(data)
+                document.querySelector('#dataField1')
+                    .innerText = message.toStringVerbose()
+                if (message.satellites != 0)
+                {
+                    lat_state = message.latitude
+                    lon_state = message.longitude
+                    document.querySelector('#dataField').innerText = 'Data: Loaded'
+                    await checkBounds()
+                }
+
+                logs.quality.push(
+                    {
+                        sat_count: message.satellites,
+                        quality: message.quality,
+                        hdop: message.dilution,
+                        time: message.timestamp
+                    }
+                )
+
+                break
+            case '$GPRMC':
+                message = new GPRMC(data)
+                document.querySelector('#dataField2')
+                    .innerText = message.toStringVerbose()
+
+                logs.positioning.push(
+                    {
+                        latitude: message.latitude,
+                        longitude: message.longitude,
+                        speed: message.speed,
+                        course: message.course,
+                        time: message.timestamp,
+                        date: message.date
+                    }
+                )
+
+                break
+            case '$GPGSA':
+                message = new GPGSA(data)
+                document.querySelector('#dataField3')
+                    .innerText = message.toString()
+                break
+            case '$GPGLL':
+                message = new GPGLL(data)
+                document.querySelector('#dataField4')
+                    .innerText = message.toString()
+                break
+            case '$GPVTG':
+                message = new GPVTG(data)
+                document.querySelector('#dataField5')
+                    .innerText = message.toString()
+                break
+            default:
+                message = null
+                break
         }
+        return message
+    } catch (error) 
+    {
+        console.log(
+            "Error Processing GPRMC Sentence: " + error.message
+        )
+        return null
     }
 }
 
@@ -130,17 +194,6 @@ async function readUntilClosed()
                 for (let j = 0; j < data_arr.length; j++) 
                 {
                     let message = await parseNMEAMessage(data_arr[j])
-                    if (
-                        message &&
-                        message.type == 'GGA' &&
-                        message.latitude != 0 &&
-                        message.longitude != 0
-                    ){
-                        document.querySelector('#dataField')
-                            .innerText = message.toStringVerbose()
-                        if (showMap) 
-                            await getMapURL(message.latitude, message.longitude)
-                    }
                 }
                 data_arr = []
             }
@@ -158,6 +211,35 @@ async function readUntilClosed()
 }
 
 
+async function getNewFileHandle() {
+    const opts = {
+        types: [
+            {
+                description: 'JSON data',
+                accept: { 'application/json': ['.json'] },
+            },
+        ],
+    }
+    return window.showSaveFilePicker(opts)
+}
+
+
+async function writeFile(fileHandle, contents) {
+    try
+    {
+        const writable = await fileHandle.createWritable();
+        await writable.write(contents)
+        await writable.close();
+        
+        alert('File saved.')
+        return;
+    } catch (error)
+    {
+        alert('Error writing the file. ' + error.message)
+    }
+}
+
+
 /* Once the DOM is loaded, this creates the event listeners for the buttons. */
 document.addEventListener('DOMContentLoaded', 
     async () => 
@@ -166,6 +248,7 @@ document.addEventListener('DOMContentLoaded',
         let disconnect_button = document.querySelector('#disconnect')
         let run_button        = document.querySelector('#run')
         let map_button        = document.querySelector('#map-btn')
+        let save_button       = document.querySelector('#save-btn')
 
         connect_button.addEventListener('click', 
             async () => 
@@ -199,9 +282,11 @@ document.addEventListener('DOMContentLoaded',
         run_button.addEventListener('click',
             async () => 
             {
-                disconnect_button.setAttribute('style', 'visibility: visible')
                 document.querySelector('#dataField').innerText = 'Data: Loading...'
+                loaded = true
                 readUntilClosed()
+                disconnect_button.setAttribute('style', 'visibility: visible')
+                save_button.setAttribute('style', 'visibility: visible')
             }
         )
 
@@ -210,13 +295,50 @@ document.addEventListener('DOMContentLoaded',
             {
                 showMap    = !showMap
                 visibility =  showMap 
-                    ? "visible"
-                    : "hidden"
+                    ? "hidden"
+                    : "visible"
                 document.querySelector('#map')
-                    .setAttribute('style', `visibility: ${visibility}`)
+                    .setAttribute('style', `height: 480px; width: 640px;visibility: ${visibility};`)
             }
         )
+
+        save_button.addEventListener('click',
+            async () =>
+            {
+                let fileHandle = await getNewFileHandle()
+                let contents   = JSON.stringify(logs)
+                console.log(contents)
+                await writeFile(fileHandle, contents)
+            }
+        )
+
+        map = L.map('map', 
+            {
+                center: [lat_state, -lon_state],
+                zoom: 16
+            }
+        );
+
+        L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+            { 
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' 
+            }
+        ).addTo(map);
     }
 )
 
 
+setInterval(
+    () =>
+    {
+        if (loaded)
+        {
+            L.circleMarker([lat_state, -lon_state], 
+                {
+                    radius: 2
+                }
+            ).addTo(map)
+        }   
+    }, 2000
+)    

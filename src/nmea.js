@@ -36,11 +36,21 @@ class NMEAGPSMessage
     /* Validate the message against NMEA Standards */
     #validateMessage(message)
     {         
-        if (!message.startsWith(this.talker)) 
+        if (!message.startsWith(this.talker))
+        {
+            console.log(
+                'Error invalid talker: ' + this.talker
+            )
             throw 'Invalid NMEA GPS Talker! Message does not start with $GP:\n' + message
+        }
 
         if (message.length > 82)
+        {
+            console.log(
+                'Error invalid length: ' + message.length + ' ' + message
+            )
             throw 'Invalid NMEA GPS Length! Message is longer than 82 characters:\n' + message
+        }
 
     
         /*/ Checksum Validation 
@@ -59,9 +69,13 @@ class NMEAGPSMessage
         {
             char = char ^ chars.charCodeAt(i);
         }
+
+        char = char.toString(16)
+        char = char.toUpperCase()
+        if (char.length == 1) char = '0'.concat(char)
         
-        if (char.toString(16) !== checksum.toLowerCase())
-            throw `Corrupted NMEA GPS Message! Checksum is ${checksum} but calculated ${char.toString(16)} for message:\n` + message
+        if (char !== checksum)
+            throw `Corrupted NMEA GPS Message! Checksum is ${checksum} but calculated ${char} for message:\n` + message
     }
 }
 
@@ -78,21 +92,21 @@ class GPGLL extends NMEAGPSMessage
  *  161229.487, -- 05 - Timestamp
  *  A,          -- 06 - Status: A is Data Valid, V is Data Invalid
  *  A           -- 07 - Mode: A is Automonous, D is DGPS, E is DR
- *  *41         -- 08 - Checksum
+ *  *41         -- 07 - Checksum
 /*/
 
     type = 'GLL'
 
-    lat = '0000.00000'
-    latitude = 0
-    latDirection = 'N/A'
-    lon = '00000.00000'
-    longitude = 0
-    lonDirection = 'N/A'
-    timestamp = 0
-    utc = 'HH:MM:SS.SS'
-    validity = ''
-    mode = ''
+    lat          = '0000.00000'
+    latitude     = 0
+    latDirection = ''
+    lon          = '00000.00000'
+    longitude    = 0
+    lonDirection = ''
+    timestamp    = 0
+    utc          = 'HH:MM:SS.SS'
+    validity     = ''
+    mode         = ''
 
     constructor(message)
     {
@@ -103,25 +117,25 @@ class GPGLL extends NMEAGPSMessage
         this._setLongitude(3)
 
         this.validity = this.messageArray[6]
-        this.mode = this.messageArray[7]
+        this.mode     = this.messageArray[7].split('*')[0]
     }
 
     _setLatitude(index) 
     {
-        this.lat      = this.messageArray[index]
+        this.lat          = this.messageArray[index]
         this.latDirection = this.messageArray[index + 1]
-        let degrees   = Number(this.lat.substring(0, 2))
-        let minutes   = Number(this.lat.substring(2))
-        this.latitude = degrees + minutes / 60
+        let degrees       = Number(this.lat.substring(0, 2))
+        let minutes       = Number(this.lat.substring(2))
+        this.latitude     = degrees + minutes / 60
     }
 
     _setLongitude(index) 
     {
-        this.lon       = this.messageArray[index]
+        this.lon          = this.messageArray[index]
         this.lonDirection = this.messageArray[index + 1]
-        let degrees    = Number(this.lon.substring(0, 3))
-        let minutes    = Number(this.lon.substring(3))
-        this.longitude = degrees + minutes / 60
+        let degrees       = Number(this.lon.substring(0, 3))
+        let minutes       = Number(this.lon.substring(3))
+        this.longitude    = degrees + minutes / 60
     }
 
     _setTime(index) 
@@ -338,27 +352,27 @@ class GPVTG extends NMEAGPSMessage
 
     type = 'VTG'
 
-    courseTrue = 0
+    mode           = ''
+    courseTrue     = 0
     courseMagnetic = 0
-    speedKnots = 0
-    speedKMH   = 0
-    mode = ''
+    speedKnots     = 0
+    speedKMH       = 0
 
     constructor(message)
     {
         super(message)
 
-        this.courseTrue = Number(this.messageArray[1])
+        this.courseTrue     = Number(this.messageArray[1])
         this.courseMagnetic = Number(this.messageArray[3])
-        this.speedKnots = Number(this.messageArray[5])
-        this.speedKMH = Number(this.messageArray[7])
-        this.mode = this.messageArray[9]
+        this.speedKnots     = Number(this.messageArray[5])
+        this.speedKMH       = Number(this.messageArray[7])
+        this.mode           = this.messageArray[9].split('*')[0]
     }
 
     toString()
     {
         return `Course (true): ${this.courseTrue}\n` +
-               `Course (magnetic: ${this.courseMagnetic}\n)` +
+               `Course (magnetic): ${this.courseMagnetic}\n` +
                `Speed  (knots): ${this.speedKnots}\n` +
                `Speed  (K/h): ${this.speedKMH}\n` +
                `Mode: ${this.mode}`
@@ -382,16 +396,15 @@ W,          -- 06 - Longitude Direction W or E
 120598,     -- 09 - Date DDYYMM
 ...,        -- 10 - Magnetic Variation, Degrees, E or W
 ...         -- 11 - Mode: A is Autonomous, D is DPGS, E is DR
-*10         -- 12 - Checksum
+*10         -- 11 - Checksum
 /*/
 
     type = 'RMC'
 
-    speed = 0
-    course = 0
-    date = 'ddyymm'
+    speed     = 0
+    course    = 0
     variation = 0
-    mode = ''
+    date      = 'ddyymm'
 
     constructor(message)
     {
@@ -401,11 +414,11 @@ W,          -- 06 - Longitude Direction W or E
         this._setLatitude(3)
         this._setLongitude(5)
 
-        this.speed = Number(this.messageArray[7])
-        this.course = Number(this.messageArray[8])
-        this.date = Number(this.messageArray[9])
+        this.speed     = Number(this.messageArray[7])
+        this.course    = Number(this.messageArray[8])
+        this.date      = Number(this.messageArray[9])
         this.variation = this.messageArray[10]
-        this.mode = this.messageArray[11]
+        this.mode      = this.messageArray[11]
     }
 
     toString()
@@ -422,7 +435,7 @@ W,          -- 06 - Longitude Direction W or E
                `Course (degrees): ${this.course}\n` + 
                `Time: ${this.utc}\n` +
                `Date: ${this.date}\n` +
-               `Magnetic Variation: ${this.variation}\n` +
-               `Mode: ${this.mode}`
+               `Magnetic Variation: ${this.variation || '0'}\n` +
+               `Mode: ${this.mode || 'null'}`
     }
 }

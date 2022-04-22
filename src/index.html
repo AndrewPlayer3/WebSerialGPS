@@ -2,6 +2,12 @@
 <html lang="en">
     <head>
         <title>WebSerial GPS</title>
+
+        <link rel="stylesheet" href="../style/style.css"/>
+
+        <link rel="stylesheet" href="../lib/leaflet/leaflet.css" />
+        <script src="../lib/leaflet/leaflet.js"></script>
+
         <script src="nmea.js"></script>
         <script src="serial.js"></script>
     </head>
@@ -9,23 +15,68 @@
         <h1>GT-U7 (NEO-6M) GPS with the WebSerial API</h1>
         <div>
             <button id="connect">Select Device</button>
-            <button id="map-btn">Toggle Map</button>
+            <button id="map-btn">Hide Map</button>
             <button id="run" style="visibility: hidden">Run</button>
             <button id="disconnect" style="visibility: hidden">Stop</button>
+            <button id="save-btn" style="visibility: hidden">Save</button>
         </div>
-        <div>
-            <h3 id="dataField">Select a device to begin.</h3>
-            <iframe
-                id="map"
-                width="425"
-                height="350"
-                frameborder="0"
-                scrolling="no"
-                marginheight="0"
-                marginwidth="0"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=-93.92452239990234%2C37.8962595237529%2C-93.41125488281251%2C38.12969560730616&amp;layer=mapnik&amp;marker=89.01307049147015%2C-93.66788864135742"
-                style="visibility: hidden"
-            ></iframe>
+        <h3 id="dataField">Select a device to begin.</h3>
+        <div style="display: flex; flex-direction: row;">
+            <div style="display: flex; flex-direction: row;">
+                <h3 id="dataField1"> 
+                    Latitude:<br/>
+                    Longitude: <br/>
+                    Altitude:<br/>
+                    GEOID:<br/>
+                    Satellites:<br/>
+                    Quality:<br/>
+                    Dilution:<br/>
+                    Time:<br/>
+                </h3>
+                <h3 id="dataField2">
+                    Latitude:<br/>
+                    Longitude:<br/>
+                    Speed (knots):<br/>
+                    Course (degrees):<br/>
+                    Time:<br/>
+                    Date:<br/>
+                    Magnetic Variation:<br/>
+                    Mode:<br/>
+                </h3>
+                <h3 id="dataField3">
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    SVID:<br/>
+                    Mode:<br/>
+                    PDOP:<br/>
+                    HDOP:<br/>
+                    VDOP:<br/>
+                </h3>
+                <h3 id="dataField4">
+                    Latitude:<br/>
+                    Longitude:<br/>
+                    Time:<br/>
+                </h3>
+                <h3 id="dataField5">
+                    Course (true):<br/>
+                    Course (magnetic):<br/>
+                    Speed (knots):<br/>
+                    Speed (K/h):<br/>
+                    Mode:<br/>
+                </h3>
+            </div>
+            <div id="map" style="height: 480px; width: 640px;">
+                <!-- Map goes in here. -->
+            </div>
         </div>
         
     </body>
