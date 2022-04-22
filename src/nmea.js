@@ -267,12 +267,15 @@ class GPGSA extends NMEAGPSMessage
     toString() 
     {
         let svids = ``
+        
         this.SVIDs.forEach(
-            (_, index) => {
+            (_, index) => 
+            {
                 svids += 'SVID: ' + this.SVIDString(index) + '\n'
-                index++
+                index += 1
             }
         )
+        
         return `Mode: ${this.mode}\n` +
                 svids +
                `PDOP: ${this.PDOP}\n` +
