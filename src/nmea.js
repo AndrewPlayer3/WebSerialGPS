@@ -97,7 +97,7 @@ class GPGLL extends NMEAGPSMessage
     constructor(message)
     {
         super(message)
-
+        
         this._setTime(5)
         this._setLatitude(1)
         this._setLongitude(3)
@@ -424,7 +424,3 @@ W,          -- 06 - Longitude Direction W or E
                `Mode: ${this.mode}`
     }
 }
-
-let message = "$GPRMC,042605.00,A,6451.51631,N,14750.13566,W,0.922,,200422,,,A*6E"
-let gprmc = new GPRMC(message)
-console.log(gprmc.toStringVerbose())
