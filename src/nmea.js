@@ -95,9 +95,6 @@ class GPGLL extends NMEAGPSMessage
     constructor(message)
     {
         super(message)
-
-        if (!message.substring(3).startsWith(this.type))
-            throw 'Invalid GPGLL Message! Message does not start with $GPGLL:\n' + message
         
         this._setTime(5)
         this._setLatitude(1)
