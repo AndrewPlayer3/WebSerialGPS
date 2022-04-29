@@ -38,8 +38,8 @@ Once the page is open simply click Select Device, do that, and then click run.
  ```
 
 ### Screenshot
- ![mapss](https://user-images.githubusercontent.com/19739107/164237236-48d7f727-e86b-4a24-aac8-0e6ac4763427.png)
-  
+![Screenshot from 2022-04-23 03-35-26](https://user-images.githubusercontent.com/19739107/166073863-f31d2952-41a9-47aa-a33b-029210a7dbc4.png)
+
 ### Further Resources
   - [In-Depth NMEA GPS Sentence Information](http://aprs.gids.nl/nmea/)
   - [NMEA GPS Wikipedia](https://en.wikipedia.org/wiki/NMEA_0183)
